@@ -1,0 +1,103 @@
+name: Deploy Lambda Function
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+env:
+  TF_VAR_image_version: 'v${{ github.run_number}}'
+  TF_VAR_aws_account_id: '${{ secrets.AWS_ACCOUNT_ID }}'
+  TF_VAR_cognito_user_pool_id: '${{ secrets.COGNITO_USER_POOL_ID }}'
+  TF_VAR_cognito_client_id: '${{ secrets.COGNITO_CLIENT_ID }}'
+  TF_VAR_aws_access_key_id: '${{ secrets.AWS_ACCESS_KEY_ID }}'
+  TF_VAR_aws_secret_access_key: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+  TF_VAR_aws_session_token: '${{ secrets.AWS_SESSION_TOKEN }}'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.9'
+      - name: Build
+        run: |
+          npm install
+          npm run build
+  tf-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform fmt
+        run: terraform fmt --check
+
+      - name: Terraform Validate
+        run: terraform validate
+
+  build-container:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [build, tf-plan]
+    environment: build
+    steps:
+      - name: Cofigure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Configure Docker and ECS
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/fiap_food_identity
+
+      - name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/fiap_food_identity:latest
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/fiap_food_identity:v${{github.run_number}}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-container]
+    environment: production
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply --auto-approve

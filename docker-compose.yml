@@ -1,0 +1,12 @@
+services:
+  auth-lambda-app:
+    image: gm50x/fiap-food-auth-lambda
+    build:
+      context: .
+    container_name: 'fiap-food-auth-lambda'
+    environment:
+      NODE_ENV: 'development'
+    env_file:
+      - .env
+    ports:
+      - 30000:8080

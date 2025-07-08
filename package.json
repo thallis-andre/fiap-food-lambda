@@ -1,0 +1,25 @@
+{
+  "name": "fiap-food-lambda",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^22.5.4",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.650.0",
+    "amazon-cognito-identity-js": "^6.3.12",
+    "axios": "^1.7.7",
+    "cpf-cnpj-validator": "^1.0.3"
+  }
+}
