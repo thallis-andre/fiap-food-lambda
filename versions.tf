@@ -7,7 +7,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "tfstate-fiap-soat10-f4"
+    bucket = "fiap-f4-soat10"
     key    = "global/s3/auth-lambda.tfstate"
     region = "us-east-1"
   }
