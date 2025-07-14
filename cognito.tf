@@ -53,7 +53,7 @@ resource "aws_cognito_user_pool_client" "fiap_food_identity_client" {
   user_pool_id = aws_cognito_user_pool.fiap_food_identity.id
 
   generate_secret = false
-  
+
   explicit_auth_flows = [
     "ALLOW_USER_PASSWORD_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH"
