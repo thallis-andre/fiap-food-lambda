@@ -1,22 +1,17 @@
 import {
-  AdminCreateUserCommand,
-  CognitoIdentityProviderClient,
+    AdminCreateUserCommand,
+    CognitoIdentityProviderClient,
 } from '@aws-sdk/client-cognito-identity-provider';
 import {
-  AuthenticationDetails,
-  CognitoUser,
-  CognitoUserPool,
+    AuthenticationDetails,
+    CognitoUser,
+    CognitoUserPool,
 } from 'amazon-cognito-identity-js';
 import { User } from '../domain/user.entity';
 import { IdentityService } from '../usecases/abstractions/identity.service';
 
 const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.AWS_REGION ?? 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.XAWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.XAWS_SECRET_ACCESS_KEY,
-    sessionToken: process.env.XAWS_SESSION_TOKEN,
-  },
 });
 
 export class CognitoIdentityService implements IdentityService {
